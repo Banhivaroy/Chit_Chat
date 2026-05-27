@@ -7,7 +7,7 @@ function Landing() {
     <div className={`app ${darkMode ? "dark" : ""}`}>
       <Sidebar darkMode={darkMode} setDarkMode={setDarkMode} />
       <main className="main">
-        <Welcome username="Alex" />
+        <Welcome username= "username" />
       </main>
     </div>
   );

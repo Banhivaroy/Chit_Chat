@@ -32,10 +32,33 @@ function SignUp() {
     return e;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async() => {
     const e = validate();
     if (Object.keys(e).length > 0) { setErrors(e); return; }
-    // all good — navigate to main page or call your API here
+     
+    try{
+      const res = await fetch("http://localhost:3000/signup",{
+        method : "POST",
+        headers: {"Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: form.firstname,
+          lastname: form.lastname,
+          username: form.username,
+          email: form.email,
+          password: form.password
+        })
+      })
+
+      const data = await res.json()
+      if(data.success){
+        navigate("/fullprofile")
+      } else{
+        setErrors({email: data.message})
+      }
+    }
+    catch(err){
+      console.log("Signup failed: ", err)
+    }
     navigate("/fullprofile");
   };
 
