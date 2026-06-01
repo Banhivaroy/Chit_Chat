@@ -49,6 +49,7 @@ io.on("connection" , (socket) => {
 
 //  ROUTES
 app.post("/signup", async(req, res) => {
+    console.log("signup request received" , req.body)
     const { firstname, lastname, username, email, password} = req.body
 
     try{
@@ -76,7 +77,7 @@ app.post("/signup", async(req, res) => {
             password,
             createdAt: new Date()
         })
-
+        console.log("user id : ", userRef.id)
         res.json({ success: true, userId: userRef.id})
     }
     catch(err){
