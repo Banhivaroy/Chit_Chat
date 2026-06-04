@@ -37,7 +37,7 @@ function SignUp() {
     if (Object.keys(e).length > 0) { setErrors(e); return; }
      
     try{
-      const res = await fetch("http://localhost:3000/signup",{
+      const res = await fetch("http://localhost:3000/",{
         method : "POST",
         headers: {"Content-Type": "application/json" },
         body: JSON.stringify({

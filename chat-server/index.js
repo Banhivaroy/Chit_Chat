@@ -2,21 +2,31 @@ const express = require("express")
 const cors = require("cors")
 const { Server } = require("socket.io")
 const http = require("http")
-const PORT = 3000
-const admin = require("firebase-admin")
-const serviceAccount = require("./serviceAccount.json")
+const mongoose = require("mongoose")
+const { first } = require("firebase/firestore/pipelines")
+require("dotenv").config()
+const port = process.env.PORT
+
 
 const app = express()
 app.use(cors())
 app.use(express.json())
 const server = http.createServer(app)
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log("MongoDb connected"))
+    .catch((err) => console.log(err))
+
+const userSchema = new mongoose.Schema({
+    firstName: { type: String, required: true},
+    lastName: { type: String, required: true},
+    username: { type: String, required: true, unique: true},
+    email: { type: String, required: true, unique: true},
+    password: { type: String, required: true},
+    createdAt: {type: Date, default: Date.now}
 })
 
-const db = admin.firestore()
-
+const User = mongoose.model("user",userSchema)
 const io = new Server(server,{
     cors: {origin: "http://localhost:5173"}
 })
@@ -48,43 +58,41 @@ io.on("connection" , (socket) => {
 
 
 //  ROUTES
-app.post("/signup", async(req, res) => {
+app.post("/", async(req, res) => {
     console.log("signup request received" , req.body)
     const { firstname, lastname, username, email, password} = req.body
 
     try{
-        const existingUsername = await db.collection("users")
-        .where("username", "=", username)
-        .get()
-
-            if(!existingUsername.empty){
+        const existingUsername = await User.findOne({ username: username })
+    
+            if(existingUsername){
             return res.json({success: false , message: "username already taken"})
             }
-        const existingEmail = await db.collection("users")
-        .where("email", "=", email)
-        .get()
-            if(!existingEmail.empty){
+        const existingEmail = await User.findOne({ email: email})
+  
+            if(existingEmail){
                 return res.json({ success: false, message:"email registered"})
             }
         // SAVE
-        const userRef = db.collection("users").doc()
-        await userRef.set({
-            id: userRef.id,
-            firstname,
-            lastname,
-            username,
-            email,
-            password,
-            createdAt: new Date()
-        })
-        console.log("user id : ", userRef.id)
-        res.json({ success: true, userId: userRef.id})
+       const newUser = new User({
+        firstName: firstname,
+        lastName: lastname,
+        username,
+        email,
+        password
+       })
+       await newUser.save()
+        console.log("user id : ", newUser._id)
+        res.json({ success: true, userId: newUser._id})
     }
     catch(err){
         console.log("Sign Up error", err)
         res.json({success: false, message: "Something went wrong"})
     }
 })
-server.listen(PORT, () => {
-    console.log(`Chat server is running at ${PORT}`)
+
+
+
+server.listen(port, () => {
+    console.log(`Chat server is running at ${port}`)
 })
